@@ -75,21 +75,19 @@ class Expectimax:
         # Hint: You may need to use the np.copy function to create a copy of the board.
         # Hint: You may need to use the np.inf constant to represent infinity.
         # Hint: You may need to use the max function to get the maximum value in a list.
-
+        moves = gf.get_moves()
         best_score = -np.inf
-        # best_action = None
+        best_action = None
 
-        for action in gf.get_moves():
-            new_board = np.copy(board)
-            move_board, score = gf.move(new_board, action)
-            # move_board = gf.move(new_board, action)
+        for move_func in moves:
+            new_board, move_made, _ = move_func(board)
+            if move_made:
+                score, _ = self.expectimax(new_board, depth - 1, 0)
+                if score > best_score:
+                    best_score = score
+                    best_action = move_func
 
-            if move_board is not None:
-                _, child_action = self.expectimax(move_board, depth - 1, 0)
-                if child_action is not None and score + child_action > best_score:
-                    best_score = score + child_action
-                    # best_action = action
-        return best_score
+        return best_score, best_action
 
         # raise NotImplementedError("Maximizer node not implemented yet.")
 
@@ -108,16 +106,15 @@ class Expectimax:
         # Hint: You may need to use the gf.get_empty_cells function to get all empty cells in the board.
         # Hint: You may need to use the gf.add_new_tile function to add a new tile to the board.
         # Hint: You may need to use the np.copy function to create a copy of the board.
-        total_score = 0
         empty_cells = gf.get_empty_cells(board)
-        num_empty_cells = len(empty_cells)
+        total_score = 0
 
-        for cell in empty_cells:
+        for cell in zip(empty_cells[0], empty_cells[1]):
             new_board = np.copy(board)
-            gf.add_new_tile(new_board, cell, 2)
+            new_board = gf.add_new_tile(new_board)
 
-            _, score = self.expectimax(new_board, depth - 1, 1)
+            score, _ = self.expectimax(new_board, depth - 1, 1)
             total_score += score
 
-        return total_score / num_empty_cells
+        return total_score / len(empty_cells), None
         # raise NotImplementedError("Chance node not implemented yet.")
