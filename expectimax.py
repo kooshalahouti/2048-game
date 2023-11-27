@@ -7,7 +7,7 @@ import game_functions as gf
 class Expectimax:
     def __init__(self, board):
         # You may change this parameter to scale the depth to which the agent searches.
-        self.DEPTH_BASE_PARAM = 1
+        self.DEPTH_BASE_PARAM = 3
         # You may change this parameter to scale depth to which the agent searches.
         self.SCALER_PARAM = 400
         self.board = board
@@ -110,11 +110,12 @@ class Expectimax:
         total_score = 0
 
         for cell in zip(empty_cells[0], empty_cells[1]):
-            new_board = np.copy(board)
-            new_board = gf.add_new_tile(new_board)
+            for tile_val in [2, 4]:
+                new_board = np.copy(board)
+                new_board[cell] = tile_val
 
-            score, _ = self.expectimax(new_board, depth - 1, 1)
-            total_score += score
+                score, _ = self.expectimax(new_board, depth - 1, 1)
+                total_score += score * 0.9 if tile_val == 2 else score * 0.1
 
-        return total_score / len(empty_cells), None
+        return total_score, None
         # raise NotImplementedError("Chance node not implemented yet.")

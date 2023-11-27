@@ -12,30 +12,26 @@ def evaluate_state(board: np.ndarray) -> float:
     # TODO: Complete evaluate_state function to return a score for the current state of the board
     # Hint: You may need to use the np.nonzero function to find the indices of non-zero elements.
     # Hint: You may need to use the gf.within_bounds function to check if a position is within the bounds of the board.
-    empty_cells_weight = 100
-    monotonicity_weight = 100
-    max_tile_weight = 1
 
-    non_zero_indices = np.nonzero(board)
-    empty_cells_score = empty_cells_weight * len(non_zero_indices[0])
+    score = np.sum(board)
 
-    monotonicity_score = 0
-    for row in board:
-        for i in range(len(row) - 1):
-            if gf.within_bounds((i, 0)) and gf.within_bounds((i + 1, 0)):
-                monotonicity_score += np.abs(row[i] - row[i + 1])
+    # Bonus for large tiles in corners
+    corner_bonus = np.sum([board[i, j] for i in [0, -1]
+                          for j in [0, -1] if gf.within_bounds((i, j))])
+    score += corner_bonus * 10
 
-    for col_index in range(board.shape[1]):
-        col = board[:, col_index]
-        for i in range(len(col) - 1):
-            if gf.within_bounds((0, i)) and gf.within_bounds((0, i + 1)):
-                monotonicity_score += np.abs(col[i] - col[i + 1])
+    # Penalty for adjacent tiles with large differences
+    for i in range(gf.CELL_COUNT):
+        for j in range(gf.CELL_COUNT):
+            current_value = board[i, j]
 
-    monotonicity_score *= monotonicity_weight
+            for ni, nj in [(i, j-1), (i, j+1), (i-1, j), (i+1, j)]:
+                if gf.within_bounds((ni, nj)):
+                    neighbor_value = board[ni, nj]
+                    if neighbor_value != 0:
+                        score -= abs(current_value - neighbor_value)
 
-    max_tile_score = max_tile_weight * np.max(board)
-    total_score = empty_cells_score + monotonicity_score + max_tile_score
+    return score
 
-    return total_score
-
-    # raise NotImplementedError("Evaluation function not implemented yet.")
+    # x = np.zeros
+    # raise NotImplentedError("Evaluation function not implemented yet.")
