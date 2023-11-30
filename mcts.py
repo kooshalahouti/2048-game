@@ -35,26 +35,19 @@ class MCTS:
         # Hint: You may want to use the self.SD_SCALE_PARAM, self.SL_SCALE_PARAM, and self.SCALER_PARAM parameters.
         # Hint: You may want to use the self.UCB_SPM_SCALE_PARAM, self.UCB_SL_SCALE_PARAM, and self.UCB_SCALER_PARAM parameters.
         # Hint: You may want to use the self.mode parameter to check which mode the agent is on.
-        scaler_param = 0
-        tm_scale_param = 0
-        sd_scale_param = 0
-        
-        
+        if move_number == 0:
+            return 1, self.TM_SCALE_PARAM if self.mode != 'ucb' else self.UCB_TM_SCALE_PARAM
+
         if self.mode == 'ucb':
-            scaler_param = self.UCB_SCALER_PARAM
-            tm_scale_param = self.UCB_TM_SCALE_PARAM
-            sd_scale_param = self.UCB_SD_SCALE_PARAM
+            search_depth = int(self.UCB_SCALER_PARAM / np.sqrt(move_number))
+            total_moves = self.UCB_TM_SCALE_PARAM
 
         else:
-            scaler_param = self.SCALER_PARAM
-            tm_scale_param = self.TM_SCALE_PARAM
-            sd_scale_param = self.SD_SCALE_PARAM
+            search_depth = int(self.SCALER_PARAM / np.sqrt(move_number))
+            total_moves = self.TM_SCALE_PARAM
 
-        
-        depth = int(sd_scale_param * np.log(move_number + tm_scale_param) / np.log(scaler_param))
-        depth = max(1, depth)
-        return depth, move_number
-        
+        return search_depth, total_moves
+
         # raise NotImplementedError("Get search params not implemented yet.")
 
     def ai_move(self, board, move_number):
@@ -65,7 +58,7 @@ class MCTS:
             best_move = self.mcts_v0(board, total_moves, search_depth)
         return best_move
 
-    # @staticmethod
+    @staticmethod
     def simulate_move(board: np.ndarray, search_depth: int) -> float:
         """
         Returns the score of the given board state.
@@ -82,10 +75,12 @@ class MCTS:
         if search_depth == 0 or gf.terminal_state(board):
             return evaluation.evaluate_state(board)
 
-        _, move_made, _ = gf.random_move(board)
+        move_func = np.random.choice(gf.get_moves())
+        new_board, move_made, _ = move_func(np.copy(board))
         if move_made:
-            gf.add_new_tile(board)
-        return MCTS.simulate_move(board, search_depth - 1)
+            return evaluation.evaluate_state(new_board) + 0.9 * MCTS.simulate_move(new_board, search_depth - 1)
+        else:
+            return evaluation.evaluate_state(board)
         # raise NotImplementedError("Simulate move not implemented yet.")
 
     def ucb(self, moves: list, total_visits: int) -> np.ndarray:
@@ -100,16 +95,19 @@ class MCTS:
         # Hint: You may want to use np.inf to represent infinity.
         # Hint: You may want to use np.sqrt to calculate the square root of a number.
         # Hint: You may want to use np.log to calculate the natural logarithm of a number.
-        ucb_scores = np.zeros(len(moves))
-        for i, (move, visits, total_score) in enumerate(moves):
-            if visits == 0:
-                ucb_scores[i] = np.inf
+        ucb_scores = []
+        for move in moves:
+            move_score = move[0]
+            move_visits = move[1]
+            if move_visits == 0:
+                exploration_term = np.inf
             else:
-                exploration_term = self.C_CONSTANT * np.sqrt(np.log(total_visits) / visits)
-                exploitation_term = total_score / visits
-                ucb_scores[i] = exploitation_term + exploration_term
-        return ucb_scores
-        
+                exploration_term = self.C_CONSTANT * \
+                    np.sqrt(np.log(total_visits) / move_visits)
+            ucb_scores.append(move_score + exploration_term)
+
+        return np.array(ucb_scores)
+
         # raise NotImplementedError("UCB not implemented yet.")
 
     def mcts_v0(self, board: np.ndarray, total_moves: int, search_depth: int):
@@ -131,24 +129,20 @@ class MCTS:
         # Hint: You may want to use the np.argmax function to get the index of the maximum value in an array.
         # Hint: You may want to use the np.zeros function to create an array of zeros.
         # Hint: You may want to use the np.copy function to create a copy of a numpy array.
-        
-        best_move = None
-        best_score = float('-inf')
+        moves = gf.get_moves()
+        scores = np.zeros(len(moves))
+        visits = np.zeros(len(moves))
 
-        for move in gf.get_moves(board):
-            scroe = 0
-            for _ in range(total_moves):
-                new_board = np.copy(board)
-                gf.add_new_tile(new_board)
-                scroe += self.simulate_move(new_board, search_depth)
-            
-            average_score = scroe / total_moves
+        for _ in range(total_moves):
+            for i, move_func in enumerate(moves):
+                new_board, move_made, _ = move_func(np.copy(board))
+                if move_made:
+                    scores[i] += MCTS.simulate_move(new_board, search_depth)
+                    visits[i] += 1
 
-            if average_score > best_score:
-                best_score = average_score
-                best_move = move
-        
-        return best_move
+        non_zero_visits = np.where(visits != 0)
+        scores[non_zero_visits] /= visits[non_zero_visits]
+        return moves[np.argmax(scores)]
 
         # raise NotImplementedError("MCTS v0 not implemented yet.")
 
@@ -171,18 +165,20 @@ class MCTS:
         # Hint: You may want to use the np.argmax function to get the index of the maximum value in an array.
         # Hint: You may want to use the np.copy function to create a copy of a numpy array.
         # Hint: You may want to use the self.ucb function to get the UCB scores for the given moves.
-        best_move = None
-        best_ucb = float('-inf')
+        moves = gf.get_moves()
+        move_data = [(0, 0) for _ in range(len(moves))]
+        total_visits = 0
 
-        for move in gf.get_moves(board):
-            total_val = 0
-            if move in self.visits:
-                total_visits = self.visits[move]
+        for _ in range(total_moves):
+            ucb_scores = self.ucb(move_data, total_visits)
+            chosen_move_index = np.argmax(ucb_scores)
+            chosen_move = moves[chosen_move_index]
 
-            ucb_score = self.ucb([move], total_visits)
+            new_board, move_made, _ = chosen_move(np.copy(board))
+            if move_made:
+                move_data[chosen_move_index] = (move_data[chosen_move_index][0] + MCTS.simulate_move(
+                    new_board, search_depth), move_data[chosen_move_index][1] + 1)
+            total_visits += 1
 
-            if ucb_score > best_ucb:
-                best_ucb = ucb_score
-                best_move = move
-        return best_move
+        return chosen_move
         # raise NotImplementedError("MCTS v2 not implemented yet.")

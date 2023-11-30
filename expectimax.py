@@ -75,38 +75,39 @@ class Expectimax:
         # Hint: You may need to use the np.copy function to create a copy of the board.
         # Hint: You may need to use the np.inf constant to represent infinity.
         # Hint: You may need to use the max function to get the maximum value in a list.
-        # moves = gf.get_moves()
-        # best_score = -np.inf
-        # best_action = None
-
-        # for move_func in moves:
-        #     new_board, move_made, _ = move_func(board)
-        #     if move_made:
-        #         score, _ = self.expectimax(new_board, depth - 1, 0)
-        #         if score > best_score:
-        #             best_score = score
-        #             best_action = move_func
-
-        # return best_score, best_action
         moves = gf.get_moves()
         best_score = -np.inf
         best_action = None
 
-        for move in moves:
-            new_board, move_made, _ = move(board)
+        for move_func in moves:
+
+            new_board, move_made, _ = move_func(board)
             if move_made:
-                if move != gf.move_down:
-                    score, _ = self.expectimax(new_board, depth - 1, 0)
-                    if score > best_score:
-                        best_score = score
-                        best_action = move
-                else:
-                    if best_action is None:
-                        score, _ = self.expectimax(new_board, depth - 1, 0)
-                        best_score = score
-                        best_action = move
+                score, _ = self.expectimax(new_board, depth - 1, 0)
+                if score > best_score:
+                    best_score = score
+                    best_action = move_func
 
         return best_score, best_action
+        # moves = gf.get_moves()
+        # best_score = -np.inf
+        # best_action = None
+
+        # for move in moves:
+        #     new_board, move_made, _ = move(board)
+        #     if move_made:
+        #         if move != gf.move_down:
+        #             score, _ = self.expectimax(new_board, depth - 1, 0)
+        #             if score > best_score:
+        #                 best_score = score
+        #                 best_action = move
+        #         else:
+        #             if best_action is None:
+        #                 score, _ = self.expectimax(new_board, depth - 1, 0)
+        #                 best_score = score
+        #                 best_action = move
+
+        # return best_score, best_action
 
         # raise NotImplementedError("Maximizer node not implemented yet.")
 

@@ -7,7 +7,8 @@ from matplotlib import pyplot as plt
 from game_ai import ai_move
 import game_functions as gf
 
-SAMPLE_COUNT = 10  # Number of games to play in the plot (Higher = more accurate but slower)
+# Number of games to play in the plot (Higher = more accurate but slower)
+SAMPLE_COUNT = 10
 
 
 def ai_play(board, agent_name='expectimax'):
