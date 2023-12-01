@@ -4,8 +4,8 @@ from pprint import pprint
 import numpy as np
 from matplotlib import pyplot as plt
 
-from game_ai import ai_move
-import game_functions as gf
+from AI_HW3.game_ai import ai_move
+import AI_HW3.game_functions as gf
 
 # Number of games to play in the plot (Higher = more accurate but slower)
 SAMPLE_COUNT = 10

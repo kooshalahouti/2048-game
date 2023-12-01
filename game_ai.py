@@ -1,5 +1,5 @@
-from mcts import MCTS
-from expectimax import Expectimax
+from AI_HW3.mcts import MCTS
+from AI_HW3.expectimax import Expectimax
 
 
 def get_agent(board, agent_name):

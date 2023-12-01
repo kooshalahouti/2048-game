@@ -1,7 +1,7 @@
 import numpy as np
 
-import evaluation
-import game_functions as gf
+import AI_HW3.evaluation as evaluation
+import AI_HW3.game_functions as gf
 
 
 class Expectimax:

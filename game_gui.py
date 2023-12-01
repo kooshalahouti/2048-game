@@ -1,7 +1,7 @@
 from tkinter import Frame, Label, CENTER
 
-import game_ai
-import game_functions
+import AI_HW3.game_ai as game_ai
+import AI_HW3.game_functions as game_functions
 
 EDGE_LENGTH = 400
 CELL_COUNT = 4
